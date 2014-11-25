@@ -86,8 +86,7 @@ def main(training_file, test_file, result_file):
 
 
 
-    #clf = classification.random_forest(x_train, y_train, x_cv, y_cv)
-    clf = RandomForestClassifier(n_estimators=20)
+    rfc = RandomForestClassifier(n_estimators=20)
     #logreg = linear_model.LogisticRegression(C=1e5)
     #ada = AdaBoostClassifier(n_estimators=100)
     #gnb = GaussianNB()
@@ -104,7 +103,7 @@ def main(training_file, test_file, result_file):
 
     #predict = gnb.fit(x, y).predict_proba(x_test)
     #predict = logreg.fit(x, y).predict_proba(x_test)
-    predict = clf.fit(tr, tr_label).predict_proba(test)
+    predict = rfc.fit(tr, tr_label).predict_proba(test)
     #predict = clf.fit(x, y).predict_proba(x_test)
 
     res_file = open(result_file, 'w')
