@@ -1,18 +1,31 @@
 #!/usr/bin/env python
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn import linear_model
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.tree import DecisionTreeClassifier
+#from sklearn.ensemble import BaggingClassifier     #???
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
+from sklearn.lda import LDA
+from sklearn.qda import QDA
 import csv
 
+def main(training_file, test_file, result_file):
 
 
-
-def main():
-	#input training and test dataset
-    with open('/home/ore/Documents/LiClipse Workspace/Kaggle/data/training.csv', 'rb') as csvfile:
+    #input training and test dataset
+    with open(training_file, 'rb') as csvfile:
         datareader = csv.reader(csvfile, delimiter=',') #delimiter is ',' seperating fields
         datareader.next() #skip header and read only data
         training_data = []
         for row in datareader:
             training_data.append(row)
-    with open('home/ore/Documents/LiClipse Workspace/Kaggle/data/test.csv', 'rb') as csvfile:
+    with open(test_file, 'rb') as csvfile:
         datareader = csv.reader(csvfile, delimiter=',') #delimiter is ',' seperating fields
         datareader.next() #skip header and read only data
         test_data = []
@@ -20,79 +33,107 @@ def main():
             test_data.append(row)
 
     #get label 'IsBadBuy' column and remove 'RefId' for both datasets, store test_data_refid for submission
-    training_data_no_label = [line[2 : :] for line in training_data]
-    training_data_label = [int(line[1]) for line in training_data]
-    test_data = [line[1 : :] for line in test_data]
-    test_data_refid = [line[0] for line in test_data]
+    tr = [line[2 : :] for line in training_data]
+    tr_label = [int(line[1]) for line in training_data]
+    refid = [line[0] for line in test_data]
+    test = [line[1 : :] for line in test_data]
+   # print data
 
-    #extract the year and month
-	#insert months from purchase date as a new column
-	#change purchase date to only contain the year since days is useless
-    idx = 0
-    for i in range(len(training_data_no_label)):
-    	year = training_data_no_label[i][idx].rfind('/', 0, len(training_data_no_label[i][idx]))
-    	month = training_data_no_label[i][idx].find('/', 0, len(training_data_no_label[i][idx]))
-    	x[i].append(training_data_no_label[i][idx][0 : month])
-    	training_data_no_label[i][idx] = training_data_no_label[i][idx][year + 1 : :]
+    j = 0
+    for i in range(len(tr)):
+        month = tr[i][j].index('/', 0, len(tr[i][j]))
+        year = tr[i][j].rfind('/', 0, len(tr[i][j]))
+        tr[i].append(tr[i][j][0 : month])
+        tr[i][j] = tr[i][j][year + 1 : :]
 
-    idx = 0
-    for i in range(len(test_data)):
-    	year = test_data[i][idx].rfind('/', 0, len(test_data[i][idx]))
-    	month = test_data[i][idx].find('/', 0, len(test_data[i][idx]))
-    	test_data[i].append(test_data[i][idx][0 : month])
-    	test_data[i][idx] = test_data[i][idx][year + 1 : :]
-
+    j = 0
+    for i in range(len(test)):
+        month = test[i][j].index('/', 0, len(test[i][j]))
+        year = test[i][j].rfind('/', 0, len(test[i][j]))
+        test[i].append(test[i][j][0 : month])
+        test[i][j] = test[i][j][year + 1 : :]
 
     #fill empty number values with median of values in its column
     numbers_columns = [3, 12, 16, 17, 18, 19, 20, 21, 22, 23, 29, 31]
 
-    for idx in numbers_columns:
-    	for i in range(len(training_data_no_label)):
-        if training_data_no_label[i][idx] == '' or training_data_no_label[i][idx] == 'NULL':
-        	training_data_no_label[i][idx] = median(training_data_no_label[:,idx])
+    for j in numbers_columns:
+        column_median = median([row[j] for row in tr])
+        for i in range(len(tr)):
+            if tr[i][j] == '' or tr[i][j] == 'NULL':
+                tr[i][j] = column_median
+            else:
+                tr[i][j] = float(tr[i][j])
+
+    for j in numbers_columns:
+        column_median = median([row[j] for row in test])
+        for i in range(len(test)):
+            if test[i][j] == '' or test[i][j] == 'NULL':
+                test[i][j] = column_median
+            else:
+                test[i][j] = float(test[i][j])
+
+    for column in [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15,
+                            24, 25, 26, 27, 28, 30, 32]:
+        categories = {}
+        count=0
+        for row in tr:
+            cat = row[column]
+            if not cat in categories:
+                categories[cat] = count
+                count+=1      
+        tr = categorize(tr, column, categories)
+        test = categorize(test, column, categories)
+
+
+
+    #clf = classification.random_forest(x_train, y_train, x_cv, y_cv)
+    clf = RandomForestClassifier(n_estimators=20)
+    #logreg = linear_model.LogisticRegression(C=1e5)
+    #ada = AdaBoostClassifier(n_estimators=100)
+    #gnb = GaussianNB()
+    #gbc = GradientBoostingClassifier()
+    #gbr = GradientBoostingRegressor()      ??
+    #etc = ExtraTreesClassifier()
+    #dtc = DecisionTreeClassifier()
+    #knn = KNeighborsClassifier()
+    #svc = SVC(probability=True)
+
+    #lda = LDA()
+    #qda = QDA()
+
+
+    #predict = gnb.fit(x, y).predict_proba(x_test)
+    #predict = logreg.fit(x, y).predict_proba(x_test)
+    predict = clf.fit(tr, tr_label).predict_proba(test)
+    #predict = clf.fit(x, y).predict_proba(x_test)
+
+    res_file = open(result_file, 'w')
+    writer = csv.writer(res_file)
+    header = 'RefId','IsBadBuy'
+    writer.writerow(header)
+    for i in range(len(refid)):
+        writer.writerow([refid[i], predict[i][1]])
+    res_file.close()
+    print "Done"
+
+
+
+def categorize(data, column, categories):    
+    new_cat = max(categories.values()) + 1
+    for row_index in range(len(data)):
+        cate = data[row_index][column]
+        if not cate in categories:
+            categories[cate] = new_cat
+            new_cat += 1
         else:
-            training_data_no_label[i][idx] = float(training_data_no_label[i][idx])
-
-	for idx in numbers_columns:
-    	for i in range(len(test_data)):
-        if test_data[i][idx] == '' or test_data[i][idx] == 'NULL':
-        	test_data[i][idx] = median(test_data[:,idx])
-        else:
-            test_data[i][idx] = float(test_data[i][idx])
-
-
-    #convert all categories to integers
-    cate_feature_indices = [0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 13, 14, 15,
-                            24, 25, 26, 27, 28, 30, 32]
-    for column in cate_feature_indices:
-    	training_data_no_label = categorize(training_data_no_label, column)
-    	test_data = categorize(test_data, column)
-
-
-    #done with preprocessing
-
-
-
-
-
-def categorize(x, column):
-	categories = {}
-	count=0
-	for row in x:
-		cat = row[column]
-		if not car in categories:
-			categories[cat] = count
-			count+=1
-	for  i in range(len(x)):
-		x[i][column] = categories[cat]
-	return x
-
-
+            cate_num = categories[cate]
+        data[row_index][column] = cate_num
+    return data
 
 
 def median(column_values):
     sortedLst = sorted(column_values)
-    lstLen = len(columnValues)
+    lstLen = len(column_values)
     index = (lstLen - 1) // 2
     if (lstLen % 2):
         return sortedLst[index]
@@ -100,6 +141,5 @@ def median(column_values):
         return (sortedLst[index] + sortedLst[index + 1])/2.0
 
 
-
-
-main()
+if __name__ == '__main__':
+    main('./data/training.csv','./data/test.csv','./data/res.csv')
