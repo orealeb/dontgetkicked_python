@@ -38,7 +38,6 @@ def main(training_file, test_file, result_file):
     refid = [line[0] for line in test_data]
     test = [line[1 : :] for line in test_data]
    # print data
-
     j = 0
     for i in range(len(tr)):
         month = tr[i][j].index('/', 0, len(tr[i][j]))
@@ -86,11 +85,22 @@ def main(training_file, test_file, result_file):
 
 
 
-    rfc = RandomForestClassifier(n_estimators=20)
+    
+    with open('training_new.csv', 'w') as fp:
+        a = csv.writer(fp, delimiter=',')
+        a.writerows(tr)
+
+    with open('test_new.csv', 'w') as fp:
+        a = csv.writer(fp, delimiter=',')
+        a.writerows(test)
+    
+
+    #clf = classification.random_forest(x_train, y_train, x_cv, y_cv)
+    #clf = RandomForestClassifier(n_estimators=20)
     #logreg = linear_model.LogisticRegression(C=1e5)
     #ada = AdaBoostClassifier(n_estimators=100)
     #gnb = GaussianNB()
-    #gbc = GradientBoostingClassifier()
+    gbc = GradientBoostingClassifier()
     #gbr = GradientBoostingRegressor()      ??
     #etc = ExtraTreesClassifier()
     #dtc = DecisionTreeClassifier()
@@ -103,8 +113,8 @@ def main(training_file, test_file, result_file):
 
     #predict = gnb.fit(x, y).predict_proba(x_test)
     #predict = logreg.fit(x, y).predict_proba(x_test)
-    predict = rfc.fit(tr, tr_label).predict_proba(test)
-    #predict = clf.fit(x, y).predict_proba(x_test)
+    #predict = svc.fit(tr, tr_label).predict_proba(test)
+    predict = gbc.fit(tr, tr_label).predict_proba(test)
 
     res_file = open(result_file, 'w')
     writer = csv.writer(res_file)
@@ -141,4 +151,4 @@ def median(column_values):
 
 
 if __name__ == '__main__':
-    main('./data/training.csv','./data/test.csv','./data/res.csv')
+    main('./Datasets/training_getkicked.csv','./Datasets/test_getkicked.csv','./Datasets/res.csv')
